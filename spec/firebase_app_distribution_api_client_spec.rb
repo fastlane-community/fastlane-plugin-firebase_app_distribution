@@ -8,8 +8,7 @@ describe Fastlane::Client::FirebaseAppDistributionApiClient do
   let(:stubs) { Faraday::Adapter::Test::Stubs.new }
   let(:conn) do
     Faraday.new(url: "https://firebaseappdistribution.googleapis.com") do |b|
-      b.response(:json, parser_options: { symbolize_names: true })
-      b.response(:raise_error)
+      Fastlane::Client::FirebaseAppDistributionApiClient.configure_connection(b)
       b.adapter(:test, stubs)
     end
   end
@@ -139,6 +138,28 @@ describe Fastlane::Client::FirebaseAppDistributionApiClient do
         .and_raise(Errno::ENOENT.new("file not found"))
       expect { api_client.upload_binary("app_id", "invalid_binary.apk", "android") }
         .to raise_error("#{ErrorMessage.binary_not_found('APK')}: invalid_binary.apk")
+    end
+
+    it 'retries if a server error occurs' do
+      responses = [
+        [
+          500,
+          {},
+          "Server Error"
+        ],
+        [
+          202,
+          {},
+          {
+            token: "projects/project_id/apps/app_id/releases/-/binaries/binary_hash"
+          }
+        ]
+      ]
+      stubs.post("/app-binary-uploads?app_id=app_id", fake_binary_contents, upload_headers) do |env|
+        responses.shift
+      end
+      api_client.upload_binary("app_id", fake_binary_path, "android")
+      expect(responses).to be_empty, "the upload should have been retried after the initial failure"
     end
   end
 
