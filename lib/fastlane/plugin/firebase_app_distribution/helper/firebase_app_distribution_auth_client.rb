@@ -71,8 +71,11 @@ module Fastlane
         )
         client.fetch_access_token!
         client.access_token
-      rescue Signet::AuthorizationError
-        UI.user_error!(ErrorMessage::REFRESH_TOKEN_ERROR)
+      rescue Signet::AuthorizationError => error
+        UI.user_error!(
+          "#{ErrorMessage::REFRESH_TOKEN_ERROR}" \
+          "\n\nDetails:\n#{error.message}\nResponse status: #{error.response.status}"
+        )
       end
 
       def service_account(google_service_path)
@@ -83,8 +86,11 @@ module Fastlane
         service_account_credentials.fetch_access_token!["access_token"]
       rescue Errno::ENOENT
         UI.user_error!("#{ErrorMessage::SERVICE_CREDENTIALS_NOT_FOUND}: #{google_service_path}")
-      rescue Signet::AuthorizationError
-        UI.user_error!("#{ErrorMessage::SERVICE_CREDENTIALS_ERROR}: #{google_service_path}")
+      rescue Signet::AuthorizationError => error
+        UI.user_error!(
+          "#{ErrorMessage::SERVICE_CREDENTIALS_ERROR}: #{google_service_path}" \
+          "\n\nDetails:\n#{error.message}\nResponse status: #{error.response.status}"
+        )
       end
     end
   end
