@@ -107,9 +107,9 @@ describe Fastlane::Auth::FirebaseAppDistributionAuthClient do
 
         it 'crashes if given an invalid firebase token' do
           expect(firebase_auth).to receive(:new)
-            .and_raise(Signet::AuthorizationError.new("error"))
+            .and_raise(Signet::AuthorizationError.new("error_message", { response: fake_error_response }))
           expect { auth_client.fetch_auth_token(empty_val, "invalid_refresh_token") }
-            .to raise_error(ErrorMessage::REFRESH_TOKEN_ERROR)
+            .to raise_error(/could not generate credentials.*error_message.*400/m)
         end
 
         it 'crashes if the firebase tools json has no tokens field' do

@@ -71,8 +71,11 @@ module Fastlane
         )
         client.fetch_access_token!
         client.access_token
-      rescue Signet::AuthorizationError
-        UI.user_error!(ErrorMessage::REFRESH_TOKEN_ERROR)
+      rescue Signet::AuthorizationError => error
+        UI.user_error!(
+          "#{ErrorMessage::REFRESH_TOKEN_ERROR}" \
+          "\n\nDetails:\n#{error.message}\nResponse status: #{error.response.status}"
+        )
       end
 
       def service_account(google_service_path)
